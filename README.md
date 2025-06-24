@@ -13,3 +13,12 @@ python3 contropedia.py "Article Title"
 ```
 
 The script outputs the total revision count, detected revert count, and a simple controversy score.
+
+## Running Tests
+
+Install the `pytest` package and execute the test suite from the repository root:
+
+```bash
+pip install pytest
+pytest
+```
