@@ -17,3 +17,14 @@ python3 contropedia.py "Article Title"
 ```
 
 The script outputs the total revision count, detected revert count, and a simple controversy score.
+
+## Web Interface
+
+You can also launch a small Flask web application to try the analysis in your browser:
+
+```bash
+pip install Flask
+python3 web_app.py
+```
+
+Then open `http://127.0.0.1:5000/` and enter an article title.
