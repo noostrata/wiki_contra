@@ -18,7 +18,9 @@ def fetch_revisions(title):
         "action": "query",
         "prop": "revisions",
         "titles": title,
-        "rvprop": "timestamp|user|comment",
+        # Request revision ids and sha1 so we can detect reverts by identical
+        # content hashes in addition to edit summaries.
+        "rvprop": "timestamp|user|comment|ids|sha1",
         "rvlimit": REV_LIMIT,
         "format": "json",
     }
@@ -29,13 +31,32 @@ def fetch_revisions(title):
     return page.get("revisions", [])
 
 
+def is_hash_revert(sha1, seen_hashes):
+    """Return True if this sha1 hash matches a previous revision."""
+    return bool(sha1 and sha1 in seen_hashes)
+
+
 def analyze_reverts(revisions):
     """Return the number of reverts in the revision list."""
     revert_count = 0
+    seen_hashes = set()
+
+    # Sort revisions chronologically so "previous" refers to earlier edits
+    revisions = sorted(revisions, key=lambda r: r.get("timestamp", ""))
+
     for rev in revisions:
         comment = rev.get("comment", "")
-        if REVERT_RE.search(comment):
+        sha1 = rev.get("sha1")
+
+        summary_revert = bool(REVERT_RE.search(comment))
+        hash_revert = is_hash_revert(sha1, seen_hashes)
+
+        if summary_revert or hash_revert:
             revert_count += 1
+
+        if sha1:
+            seen_hashes.add(sha1)
+
     return revert_count
 
 
