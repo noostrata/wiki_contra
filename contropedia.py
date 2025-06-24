@@ -3,7 +3,7 @@
 
 import json
 import re
-import sys
+import argparse
 from urllib import parse, request
 
 REV_LIMIT = 500
@@ -12,14 +12,14 @@ REVERT_RE = re.compile(r"\b(revert|rv|undo|undid|reverted)\b", re.I)
 API = "https://en.wikipedia.org/w/api.php"  # MediaWiki API endpoint
 
 
-def fetch_revisions(title):
+def fetch_revisions(title, limit=REV_LIMIT):
     """Fetch revision data for a Wikipedia article."""
     params = {
         "action": "query",
         "prop": "revisions",
         "titles": title,
         "rvprop": "timestamp|user|comment",
-        "rvlimit": REV_LIMIT,
+        "rvlimit": limit,
         "format": "json",
     }
     url = API + "?" + parse.urlencode(params)
@@ -39,21 +39,48 @@ def analyze_reverts(revisions):
     return revert_count
 
 
-def main():
-    if len(sys.argv) < 2:
-        print("Usage: python3 contropedia.py 'Article Title'")
-        sys.exit(1)
+def parse_args(argv=None):
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Analyze revert activity in a Wikipedia article"
+    )
+    parser.add_argument("title", help="Wikipedia article title")
+    parser.add_argument(
+        "-l",
+        "--limit",
+        type=int,
+        default=REV_LIMIT,
+        help="Number of revisions to fetch (default: %(default)s)",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        help="Optional file to write results to instead of stdout",
+    )
+    return parser.parse_args(argv)
 
-    title = sys.argv[1]
-    revisions = fetch_revisions(title)
+
+def main(argv=None):
+    args = parse_args(argv)
+
+    revisions = fetch_revisions(args.title, limit=args.limit)
     total = len(revisions)
     reverts = analyze_reverts(revisions)
     score = reverts / total if total else 0
 
-    print(f"Article: {title}")
-    print(f"Total revisions fetched: {total}")
-    print(f"Detected reverts: {reverts}")
-    print(f"Controversy score: {score:.3f}")
+    output = [
+        f"Article: {args.title}",
+        f"Total revisions fetched: {total}",
+        f"Detected reverts: {reverts}",
+        f"Controversy score: {score:.3f}",
+    ]
+
+    if args.output:
+        with open(args.output, "w", encoding="utf-8") as fh:
+            fh.write("\n".join(output) + "\n")
+    else:
+        for line in output:
+            print(line)
 
 
 if __name__ == "__main__":
