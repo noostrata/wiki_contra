@@ -20,7 +20,7 @@ The script outputs the total revision count, detected revert count, and a simple
 
 ## Web Interface
 
-You can also launch a small Flask web application to try the analysis in your browser:
+You can also launch a small Flask web application to try the analysis in your browser. The page now uses a simple card layout and styled form controls for a cleaner look:
 
 ```bash
 pip install Flask
